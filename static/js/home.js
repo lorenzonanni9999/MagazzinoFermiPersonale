@@ -223,11 +223,15 @@ async function changePassword() {
 // ─── DASHBOARD ────────────────────────────────────────
 
 async function loadDashboard() {
-  const [rC, rM, rE, rA] = await Promise.all([
+  const [rC, rM, rE, rA, rP] = await Promise.all([
     fetch("/api/componenti"), fetch("/api/magazzini"),
-    fetch("/api/esperienze"), fetch("/api/lista-acquisti")
+    fetch("/api/esperienze"), fetch("/api/lista-acquisti"),
+    fetch("/api/users/pending")
   ]);
-  const [dC, dM, dE, dA] = await Promise.all([rC.json(), rM.json(), rE.json(), rA.json()]);
+  const [dC, dM, dE, dA, dP] = await Promise.all([
+    rC.json(), rM.json(), rE.json(), rA.json(),
+    rP.ok ? rP.json() : {users: []}
+  ]);
 
   const grid = document.getElementById("stats-grid");
   const ruolo = currentUser?.ruolo;
@@ -243,19 +247,30 @@ async function loadDashboard() {
   `;
   // Card visibili solo a ADMIN e TECNICO
   if (isAdmin || isTecnico) {
+    const pendingCount = dP.users?.length ?? 0;
     cards += `
     <div class="stat-card ${dA.totale > 0 ? 'danger' : ''}" onclick="showSection('lista-acquisti')"><div class="stat-value">${dA.totale ?? 0}</div><div class="stat-label">Voci sotto scorta minima</div></div>
+    <div class="stat-card ${pendingCount > 0 ? 'danger' : ''}" onclick="showSection('utenti')"><div class="stat-value">${pendingCount}</div><div class="stat-label">Richieste account in attesa</div></div>
     <div class="stat-card" onclick="showSection('tags')"><div class="stat-value">${allTags.length}</div><div class="stat-label">Etichette create</div></div>
     `;
   }
   grid.innerHTML = cards;
 
-  const alerts = document.getElementById("dashboard-alerts");
-  if ((isAdmin || isTecnico) && dA.totale > 0) {
-    alerts.innerHTML = `<div class="alert alert-warning">Attenzione: ci sono <strong>${dA.totale}</strong> componenti sotto la scorta minima. <a href="#" onclick="showSection('lista-acquisti');return false">Vedi lista acquisti &rarr;</a></div>`;
-  } else {
-    alerts.innerHTML = `<div class="alert alert-success">Tutti i componenti sono sopra la scorta minima.</div>`;
+  const alertsEl = document.getElementById("dashboard-alerts");
+  const alertParts = [];
+  if (isAdmin || isTecnico) {
+    const pendingCount = dP.users?.length ?? 0;
+    if (pendingCount > 0) {
+      alertParts.push(`<div class="alert alert-warning">Ci sono <strong>${pendingCount}</strong> richiest${pendingCount === 1 ? 'a' : 'e'} di registrazione in attesa di approvazione. <a href="#" onclick="showSection('utenti');return false">Gestisci utenti &rarr;</a></div>`);
+    }
+    if (dA.totale > 0) {
+      alertParts.push(`<div class="alert alert-warning">Attenzione: ci sono <strong>${dA.totale}</strong> componenti sotto la scorta minima. <a href="#" onclick="showSection('lista-acquisti');return false">Vedi lista acquisti &rarr;</a></div>`);
+    }
   }
+  if (!alertParts.length) {
+    alertParts.push(`<div class="alert alert-success">Tutti i componenti sono sopra la scorta minima.</div>`);
+  }
+  alertsEl.innerHTML = alertParts.join('');
 }
 
 // ─── COMPONENTI ───────────────────────────────────────
