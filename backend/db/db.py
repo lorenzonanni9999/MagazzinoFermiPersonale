@@ -62,6 +62,9 @@ db_interface = DatabaseInterface()
 async def init_db():
     pool = await aiomysql.create_pool(**DB_CONFIG)
     db_interface.set_pool(pool)
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SET sql_mode=''")
     await db_interface.create_tables()
     await _crea_admin_se_mancante(pool)
 
