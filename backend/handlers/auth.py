@@ -242,21 +242,24 @@ class ResetTokenHandler(BaseHandler):
         reset_url = f"{scheme}://{host}/static/reset_password.html?token={token}"
 
         email_sent = False
+        email_error = None
         try:
             await send_reset_email(target["email"], reset_url)
             email_sent = True
-        except Exception:
-            pass  # SMTP non configurato: il link viene restituito nella risposta
+        except Exception as e:
+            email_error = str(e)
 
         await db_interface.add_log(
             admin["id"], admin["email"],
-            "RESET_TOKEN", f"Generato link reset per {target['email']} (user_id={user_id}), email_sent={email_sent}"
+            "RESET_TOKEN",
+            f"Generato link reset per {target['email']} (user_id={user_id}), email_sent={email_sent}"
+            + (f", errore: {email_error}" if email_error else "")
         )
 
         if email_sent:
             message = f"Link di reset inviato a {target['email']}"
         else:
-            message = "SMTP non configurato — copia il link manualmente e invialo all'utente"
+            message = f"Email non inviata ({email_error}) — copia il link manualmente"
 
         return self.write_json({
             "message": message,
