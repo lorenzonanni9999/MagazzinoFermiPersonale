@@ -91,5 +91,5 @@ async def send_reset_email(to_addr: str, reset_url: str):
 </html>
 """
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, _send_email_sync, to_addr, subject, body_html, body_text)

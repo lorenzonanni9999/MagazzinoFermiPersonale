@@ -165,10 +165,17 @@ class DatabaseInterface:
     async def add_log(self, user_id, user_email, azione, dettagli=""):
         async with self._pool.acquire() as conn:
             async with conn.cursor() as cur:
-                await cur.execute(
-                    "INSERT INTO logs (user_id, user_email, azione, dettagli) VALUES (%s, %s, %s, %s)",
-                    (user_id, user_email, azione, dettagli)
-                )
+                try:
+                    await cur.execute(
+                        "INSERT INTO logs (user_id, user_email, azione, dettagli) VALUES (%s, %s, %s, %s)",
+                        (user_id, user_email, azione, dettagli)
+                    )
+                except Exception:
+                    # user_id stale o non esistente → log senza FK
+                    await cur.execute(
+                        "INSERT INTO logs (user_id, user_email, azione, dettagli) VALUES (NULL, %s, %s, %s)",
+                        (user_email, azione, dettagli)
+                    )
 
     async def get_logs(self, limit=2000):
         async with self._pool.acquire() as conn:
