@@ -34,13 +34,14 @@ def _get_db_config():
         "magazzino_scolastico"
     )
     return {
-        "host":       mysql_host,
-        "port":       mysql_port,
-        "user":       mysql_user,
-        "password":   mysql_password,
-        "db":         mysql_db,
-        "charset":    "utf8mb4",
+        "host": mysql_host,
+        "port": mysql_port,
+        "user": mysql_user,
+        "password": mysql_password,
+        "db": mysql_db,
+        "charset": "utf8mb4",
         "autocommit": True,
+        "init_command": "SET sql_mode=''",
     }
 
 DB_CONFIG = _get_db_config()
