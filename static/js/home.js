@@ -9,6 +9,7 @@ let allMagazzini = [];
 let currentMagazzinoId = null;
 let editingId = null;
 let sottoScortaIds = new Set();
+let sottoScortaMagIds = new Set();
 
 // ── Qualitative quantity levels ──
 const QUAL_LEVELS = [
@@ -877,9 +878,13 @@ async function removeTagFromComp(compId, tagId) {
 // ─── MAGAZZINI ────────────────────────────────────────
 
 async function loadMagazzini() {
-  const res = await fetch("/api/magazzini");
-  const data = await res.json();
+  const [res, resA] = await Promise.all([
+    fetch("/api/magazzini"),
+    fetch("/api/lista-acquisti")
+  ]);
+  const [data, dataA] = await Promise.all([res.json(), resA.ok ? resA.json() : {lista:[]}]);
   allMagazzini = data.magazzini || [];
+  sottoScortaMagIds = new Set((dataA.lista || []).map(r => r.magazzino_id));
   const tbody = document.getElementById("mag-tbody");
   if (!allMagazzini.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty">Nessun magazzino.</div></td></tr>`;
@@ -887,7 +892,13 @@ async function loadMagazzini() {
   }
   tbody.innerHTML = allMagazzini.map(m => `
     <tr>
-      <td><strong>${esc(m.nome)}</strong></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${sottoScortaMagIds.has(m.id) ? `<span onclick="showSection('lista-acquisti')" title="Uno o più componenti sotto scorta minima — clicca per vedere la lista acquisti"
+            style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:800;cursor:pointer;line-height:1;user-select:none">!</span>` : ''}
+          <strong>${esc(m.nome)}</strong>
+        </div>
+      </td>
       <td>${esc(m.ambiente||'—')}</td>
       <td>${esc(m.sezione||'—')}</td>
       <td>${esc(m.cassetto||'—')}</td>
