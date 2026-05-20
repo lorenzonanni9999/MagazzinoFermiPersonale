@@ -1,13 +1,52 @@
+import os
+import json
 import smtplib
 import asyncio
+import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from backend.db.db import SMTP_CONFIG
 
 
-def _send_email_sync(to_addr: str, subject: str, body_html: str, body_text: str):
-    """Invia una mail via SMTP (sincrono — va chiamato in un executor)."""
+# ------------------------------------------------------------------ Brevo API
+
+def _send_via_brevo(to_addr: str, subject: str, body_html: str, body_text: str):
+    """Invia tramite Brevo HTTP API (funziona su Render — no blocchi SMTP)."""
+    api_key = os.environ.get("BREVO_API_KEY", "")
+    if not api_key:
+        raise RuntimeError("BREVO_API_KEY non configurata")
+
+    sender_email = os.environ.get("SMTP_FROM") or os.environ.get("SMTP_USER") or ""
+
+    payload = {
+        "sender": {"name": "Magazzino Scolastico", "email": sender_email},
+        "to": [{"email": to_addr}],
+        "subject": subject,
+        "htmlContent": body_html,
+        "textContent": body_text,
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=data,
+        method="POST",
+        headers={
+            "api-key": api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    )
+
+    with urllib.request.urlopen(req, timeout=15) as response:
+        return json.loads(response.read())
+
+
+# ------------------------------------------------------------------ SMTP diretto
+
+def _send_via_smtp(to_addr: str, subject: str, body_html: str, body_text: str):
+    """Invia tramite SMTP diretto (locale/sviluppo)."""
     cfg = SMTP_CONFIG
     if not cfg["user"] or not cfg["password"]:
         raise RuntimeError("Configurazione SMTP mancante (SMTP_USER / SMTP_PASSWORD non impostati)")
@@ -18,7 +57,6 @@ def _send_email_sync(to_addr: str, subject: str, body_html: str, body_text: str)
     msg["Subject"] = subject
     msg["From"] = f"Magazzino Scolastico <{from_addr}>"
     msg["To"] = to_addr
-
     msg.attach(MIMEText(body_text, "plain", "utf-8"))
     msg.attach(MIMEText(body_html, "html", "utf-8"))
 
@@ -28,6 +66,18 @@ def _send_email_sync(to_addr: str, subject: str, body_html: str, body_text: str)
         smtp.login(cfg["user"], cfg["password"])
         smtp.sendmail(from_addr, to_addr, msg.as_string())
 
+
+# ------------------------------------------------------------------ dispatcher
+
+def _send_email_sync(to_addr: str, subject: str, body_html: str, body_text: str):
+    """Usa Brevo API se BREVO_API_KEY è configurata, altrimenti SMTP diretto."""
+    if os.environ.get("BREVO_API_KEY"):
+        _send_via_brevo(to_addr, subject, body_html, body_text)
+    else:
+        _send_via_smtp(to_addr, subject, body_html, body_text)
+
+
+# ------------------------------------------------------------------ async entry
 
 async def send_reset_email(to_addr: str, reset_url: str):
     """Invia la mail di reset password in modo asincrono."""
