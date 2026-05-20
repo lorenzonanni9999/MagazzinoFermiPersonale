@@ -45,7 +45,7 @@ class DatabaseInterface:
                         user_id INT NOT NULL,
                         expires_at DATETIME NOT NULL,
                         used BOOLEAN NOT NULL DEFAULT FALSE,
-                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                     )
                 """)
@@ -129,7 +129,7 @@ class DatabaseInterface:
                         nome VARCHAR(255) NOT NULL,
                         descrizione TEXT,
                         docente_id INT,
-                        data_creazione DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        data_creazione TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (docente_id) REFERENCES users(id) ON DELETE SET NULL
                     )
                 """)
@@ -155,7 +155,7 @@ class DatabaseInterface:
                         user_email VARCHAR(255),
                         azione VARCHAR(255) NOT NULL,
                         dettagli TEXT,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
                     )
                 """)
