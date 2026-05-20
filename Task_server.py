@@ -16,7 +16,7 @@ from backend.handlers.magazzini import (
     MagazziniHandler, MagazzinoHandler,
     MagazzinoStockHandler, MagazzinoStockItemHandler
 )
-from backend.handlers.componenti import ComponentiHandler, ComponenteHandler
+from backend.handlers.componenti import ComponentiHandler, ComponenteHandler, ComponenteEsperienzeHandler
 from backend.handlers.esperienze import (
     EsperienzeHandler, EsperienzaHandler,
     EsperienzaComponentiHandler, EsperienzaComponenteItemHandler,
@@ -59,6 +59,7 @@ def make_app():
 
             # Componenti (catalogo)
             (r"/api/componenti",                                        ComponentiHandler),
+            (r"/api/componenti/" + ID + r"/esperienze",                 ComponenteEsperienzeHandler),
             (r"/api/componenti/" + ID,                                  ComponenteHandler),
             (r"/api/componenti/" + ID + r"/tags",                       ComponenteTagsHandler),
             (r"/api/componenti/" + ID + r"/tags/" + ID,                 ComponenteTagItemHandler),

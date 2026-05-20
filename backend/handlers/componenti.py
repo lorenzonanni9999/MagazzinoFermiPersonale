@@ -94,3 +94,13 @@ class ComponenteHandler(BaseHandler):
             f"Eliminato componente '{c['nome'] if c else componente_id}'"
         )
         return self.write_json({"message": "Eliminato"})
+
+
+class ComponenteEsperienzeHandler(BaseHandler):
+    """GET /api/componenti/{id}/esperienze — elenco esperienze che usano il componente"""
+
+    async def get(self, componente_id):
+        if not self.require_auth():
+            return
+        esperienze = await db_interface.get_esperienze_componente(int(componente_id))
+        return self.write_json({"esperienze": esperienze})

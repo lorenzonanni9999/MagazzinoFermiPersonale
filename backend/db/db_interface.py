@@ -655,6 +655,18 @@ class DatabaseInterface:
                     (esperienza_id, componente_id)
                 )
 
+    async def get_esperienze_componente(self, componente_id: int):
+        async with self._pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute("""
+                    SELECT e.id, e.nome, e.descrizione
+                    FROM esperienza_componenti ec
+                    JOIN esperienze e ON e.id = ec.esperienza_id
+                    WHERE ec.componente_id = %s
+                    ORDER BY e.nome
+                """, (componente_id,))
+                return await cur.fetchall()
+
     async def check_disponibilita_esperienza(self, esperienza_id: int):
         async with self._pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cur:

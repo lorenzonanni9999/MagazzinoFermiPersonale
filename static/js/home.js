@@ -8,6 +8,7 @@ let allComponenti = [];
 let allMagazzini = [];
 let currentMagazzinoId = null;
 let editingId = null;
+let sottoScortaIds = new Set();
 
 // ── Qualitative quantity levels ──
 const QUAL_LEVELS = [
@@ -259,9 +260,13 @@ async function loadDashboard() {
 // ─── COMPONENTI ───────────────────────────────────────
 
 async function loadComponenti() {
-  const res = await fetch("/api/componenti");
-  const data = await res.json();
+  const [res, resA] = await Promise.all([
+    fetch("/api/componenti"),
+    fetch("/api/lista-acquisti")
+  ]);
+  const [data, dataA] = await Promise.all([res.json(), resA.ok ? resA.json() : {lista:[]}]);
   allComponenti = data.componenti || [];
+  sottoScortaIds = new Set((dataA.lista || []).map(r => r.componente_id));
   renderComponenti(allComponenti);
 }
 
@@ -274,7 +279,13 @@ function renderComponenti(list) {
   }
   tbody.innerHTML = list.map(c => `
     <tr>
-      <td><strong>${esc(c.nome)}</strong>${c.descrizione ? `<br><small style="color:#94a3b8">${esc(c.descrizione.substring(0,60))}${c.descrizione.length>60?'&hellip;':''}</small>` : ''}</td>
+      <td>
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          ${sottoScortaIds.has(c.id) ? `<span onclick="showSection('lista-acquisti')" title="Sotto scorta minima — clicca per vedere la lista acquisti"
+            style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;font-weight:800;cursor:pointer;margin-top:2px;line-height:1;user-select:none">!</span>` : ''}
+          <div><strong>${esc(c.nome)}</strong>${c.descrizione ? `<br><small style="color:#94a3b8">${esc(c.descrizione.substring(0,60))}${c.descrizione.length>60?'&hellip;':''}</small>` : ''}</div>
+        </div>
+      </td>
       <td>${esc(c.famiglia||'—')}</td>
       <td>${esc(c.tipo||'—')}</td>
       <td>${esc(c.ambito||'—')}</td>
@@ -460,9 +471,13 @@ async function deleteComponente(id) {
 
 async function openComponentDetail(compId) {
   detailCompId = compId;
-  const res = await fetch(`/api/componenti/${compId}`);
+  const [res, resEsp] = await Promise.all([
+    fetch(`/api/componenti/${compId}`),
+    fetch(`/api/componenti/${compId}/esperienze`)
+  ]);
   if (!res.ok) { showAlert("Errore caricamento componente", "error"); return; }
   const c = await res.json();
+  const esperienze = resEsp.ok ? ((await resEsp.json()).esperienze || []) : [];
 
   document.getElementById("detail-comp-title").textContent = c.nome;
 
@@ -498,6 +513,19 @@ async function openComponentDetail(compId) {
       ${canEdit() ? `<button class="btn btn-primary btn-sm" onclick="openAddStockForComp(${compId})">+ Magazzino</button>` : ''}
     </div>
     <div id="detail-stock-list">${renderDetailStock(c.magazzini || [], compId, c.unita_misura || 'pz')}</div>
+  </div>`;
+
+  html += `<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+    <div style="font-size:12px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Esperienze che usano questo componente</div>
+    ${esperienze.length
+      ? esperienze.map(e => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:6px;background:var(--surface-alt);border-radius:var(--radius-sm)">
+          <span style="font-size:13px;color:var(--text);font-weight:500">${esc(e.nome)}</span>
+          <button class="btn btn-primary btn-sm"
+            onclick="closeModal('modal-comp-detail');openEspDetail(${e.id})">Vai all'esperienza</button>
+        </div>`).join('')
+      : `<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:10px 0">Nessuna esperienza utilizza questo componente.</div>`
+    }
   </div>`;
 
   document.getElementById("detail-comp-body").innerHTML = html;
