@@ -1,0 +1,6 @@
+tornado
+aiomysql
+bcrypt
+cryptography
+mysql-connector-python
+python-dotenv

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaggi | Magazzino Fermi</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="tasks-page-wrapper">
+
+    <header class="tasks-topbar">
+        <div class="tasks-topbar-logo">
+            <div class="tasks-logo-mark">MF</div>
+            Magazzino Fermi
+        </div>
+        <button class="tasks-topbar-btn" onclick="addUtente()">+ Utente</button>
+        <button class="tasks-topbar-btn tasks-topbar-btn--danger" onclick="logout()">Esci</button>
+    </header>
+
+    <div class="tasks-content">
+        <div class="tasks-card">
+            <div class="tasks-card-head">
+                <h2>Messaggi</h2>
+            </div>
+            <div class="tasks-compose">
+                <input id="taskText" type="text" placeholder="Scrivi un messaggio…">
+            </div>
+            <ul id="taskList"></ul>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

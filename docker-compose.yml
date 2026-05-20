@@ -1,0 +1,35 @@
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: magazzino_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: magazzino_scolastico
+    volumes:
+      - magazzino_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: magazzino_backend
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root123
+      DB_NAME: magazzino_scolastico
+
+volumes:
+  magazzino_data:

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione | Magazzino Scolastico</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="auth-page">
+    <aside class="auth-brand">
+        <div class="auth-brand-copy">
+            <div class="auth-brand-badge">Gestione Utenti</div>
+            <div>
+                <h1>Abilita nuovi operatori per la gestione del materiale scolastico.</h1>
+                <p>Gli account creati qui potranno monitorare componenti, verificare dove si trovano nei magazzini e controllare la fattibilita delle esperienze di laboratorio.</p>
+            </div>
+        </div>
+
+        <div class="auth-brand-meta">
+            <div class="auth-stat">
+                <strong>3 ruoli</strong>
+                <span>Admin, tecnico e docente con permessi diversi su stock, catalogo e attivita.</span>
+            </div>
+            <div class="auth-stat">
+                <strong>Controllo</strong>
+                <span>Accesso riservato all'area interna del gestionale dopo autenticazione.</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-main">
+        <div class="auth-shell">
+            <section class="auth-card">
+                <div class="auth-card-head">
+                    <span class="auth-eyebrow">Nuovo utente</span>
+                    <h2>Nuovo account operativo</h2>
+                    <p>Compila i campi per creare un accesso dedicato alla gestione dei componenti e dei magazzini scolastici.</p>
+                </div>
+
+                <div class="auth-card-body">
+                    <div class="auth-form">
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input id="email" type="email" placeholder="nome@scuola.it">
+                        </div>
+
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input id="password" type="password" placeholder="Crea una password">
+                        </div>
+
+                        <div class="field">
+                            <label for="ruolo">Ruolo</label>
+                            <select id="ruolo">
+                                <option value="ADMIN">Admin</option>
+                                <option value="TECNICO">Tecnico</option>
+                                <option value="DOCENTE">Docente</option>
+                            </select>
+                            <div class="auth-hint">Scegli il profilo in base alle operazioni da svolgere: gestione stock, consultazione disponibilita o organizzazione delle esperienze.</div>
+                        </div>
+
+                        <div class="auth-actions">
+                            <button class="auth-primary" onclick="registerUser()">Registra utente</button>
+                            <div class="auth-link">
+                                <span>Operazione completata?</span>
+                                <a href="home.html">Torna alla dashboard</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-note">
+                        Questa area serve agli amministratori per autorizzare personale che dovra consultare giacenze, posizioni dei materiali e compatibilita delle esperienze di laboratorio.
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+async function ensureRegisterAccess() {
+    const res = await fetch("/api/me");
+
+    if (res.status === 401) {
+        location.href = "login.html";
+        return;
+    }
+
+    const user = await res.json();
+    if (user.ruolo !== "ADMIN") {
+        location.href = "home.html";
+    }
+}
+
+ensureRegisterAccess();
+</script>
+<script src="js/app.js"></script>
+</body>
+</html>

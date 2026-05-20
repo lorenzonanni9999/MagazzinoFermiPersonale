@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Magazzino Scolastico</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-toggle {
+            display: flex;
+            gap: 0;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 24px;
+        }
+        .auth-toggle-btn {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font);
+            color: var(--text-faint);
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+        .auth-toggle-btn.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        }
+        .auth-panel { display: none; }
+        .auth-panel.active { display: block; }
+        .auth-pending-msg {
+            text-align: center;
+            padding: 12px 8px 4px;
+            display: none;
+        }
+        .auth-pending-icon {
+            width: 64px; height: 64px;
+            background: #eff6ff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .auth-pending-msg h3 {
+            font-size: 18px; font-weight: 700;
+            color: var(--text); margin: 0 0 10px;
+        }
+        .auth-pending-msg p {
+            font-size: 13.5px; color: var(--text-faint);
+            line-height: 1.65; margin: 0 0 24px;
+        }
+        .pw-wrap { position: relative; }
+        .pw-wrap input { padding-right: 40px; width: 100%; box-sizing: border-box; }
+        .pw-eye {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; padding: 2px;
+            color: var(--text-faint); line-height: 1;
+        }
+        .pw-eye:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+<div class="auth-page">
+    <aside class="auth-brand">
+        <div class="auth-brand-copy">
+            <div class="auth-brand-badge">Magazzino Scolastico</div>
+            <div>
+                <h1>Accedi al gestionale dei componenti e dei magazzini scolastici.</h1>
+                <p>Da qui puoi controllare disponibilita, locazione dei materiali e preparazione delle esperienze di laboratorio in un'unica dashboard.</p>
+            </div>
+        </div>
+        <div class="auth-brand-meta">
+            <div class="auth-stat">
+                <strong>Stock</strong>
+                <span>Consulta rapidamente quantita disponibili e soglie minime dei componenti.</span>
+            </div>
+            <div class="auth-stat">
+                <strong>Lab</strong>
+                <span>Verifica quali esperienze sono realizzabili con il materiale presente nei magazzini.</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-main">
+        <div class="auth-shell">
+            <section class="auth-card">
+                <div class="auth-card-head">
+                    <span class="auth-eyebrow" id="auth-eyebrow">Accesso</span>
+                    <h2 id="auth-title">Area operativa</h2>
+                    <p id="auth-subtitle">Inserisci le tue credenziali per entrare nel pannello di gestione di magazzini, componenti ed esperienze.</p>
+                </div>
+
+                <div class="auth-card-body">
+                    <!-- Toggle login / registrati -->
+                    <div class="auth-toggle">
+                        <button class="auth-toggle-btn active" id="btn-tab-login" onclick="switchTab('login')">Accedi</button>
+                        <button class="auth-toggle-btn" id="btn-tab-reg" onclick="switchTab('reg')">Registrati</button>
+                    </div>
+
+                    <!-- PANEL: LOGIN -->
+                    <div class="auth-panel active" id="panel-login">
+                        <div class="auth-form">
+                            <div class="field">
+                                <label for="email">Email</label>
+                                <input id="email" type="email" placeholder="nome@scuola.it">
+                            </div>
+                            <div class="field">
+                                <label for="password">Password</label>
+                                <div class="pw-wrap">
+                                    <input id="password" type="password" placeholder="Inserisci la password">
+                                    <button type="button" class="pw-eye" onclick="togglePw('password',this)" tabindex="-1">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                                <div class="auth-hint">Dopo l'accesso potrai consultare ubicazione dei materiali, disponibilita e attivita di laboratorio configurate.</div>
+                            </div>
+                            <div class="auth-actions">
+                                <button class="auth-primary" onclick="login()">Accedi</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PANEL: REGISTRATI -->
+                    <div class="auth-panel" id="panel-reg">
+                        <!-- Messaggio post-invio -->
+                        <div class="auth-pending-msg" id="reg-pending-msg">
+                            <div class="auth-pending-icon">
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <h3>Richiesta inviata</h3>
+                            <p>La tua richiesta di accesso è stata ricevuta.<br>Un amministratore la esaminerà al più presto.<br>Riceverai conferma quando il tuo account sarà attivato.</p>
+                            <button class="auth-primary" onclick="switchTab('login')">Torna al login</button>
+                        </div>
+
+                        <div class="auth-form" id="reg-form">
+                            <div style="display:flex;gap:12px">
+                                <div class="field" style="flex:1">
+                                    <label for="reg-nome">Nome *</label>
+                                    <input id="reg-nome" type="text" placeholder="Mario">
+                                </div>
+                                <div class="field" style="flex:1">
+                                    <label for="reg-cognome">Cognome *</label>
+                                    <input id="reg-cognome" type="text" placeholder="Rossi">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="reg-email">Email *</label>
+                                <input id="reg-email" type="email" placeholder="nome@scuola.it">
+                            </div>
+                            <div class="field">
+                                <label for="reg-password">Password *</label>
+                                <div class="pw-wrap">
+                                    <input id="reg-password" type="password" placeholder="Almeno 6 caratteri">
+                                    <button type="button" class="pw-eye" onclick="togglePw('reg-password',this)" tabindex="-1">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label for="reg-password2">Conferma password *</label>
+                                <div class="pw-wrap">
+                                    <input id="reg-password2" type="password" placeholder="Ripeti la password">
+                                    <button type="button" class="pw-eye" onclick="togglePw('reg-password2',this)" tabindex="-1">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                                <div class="auth-hint">La tua richiesta sarà valutata da un amministratore prima di essere attivata.</div>
+                            </div>
+                            <div id="reg-error" style="display:none;color:#dc2626;font-size:13px;margin-bottom:8px"></div>
+                            <div class="auth-actions">
+                                <button class="auth-primary" onclick="selfRegister()">Invia richiesta</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+    const EYE_OPEN  = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const EYE_CLOSE = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+    function togglePw(inputId, btn) {
+        const inp = document.getElementById(inputId);
+        const show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        btn.innerHTML = show ? EYE_CLOSE : EYE_OPEN;
+    }
+
+    function switchTab(tab) {
+        // Ripristina sempre toggle e form registrazione
+        document.querySelector('.auth-toggle').style.display = '';
+        document.getElementById('reg-form').style.display = '';
+        document.getElementById('reg-pending-msg').style.display = 'none';
+
+        document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+        document.getElementById('panel-reg').classList.toggle('active', tab === 'reg');
+        document.getElementById('btn-tab-login').classList.toggle('active', tab === 'login');
+        document.getElementById('btn-tab-reg').classList.toggle('active', tab === 'reg');
+
+        if (tab === 'login') {
+            document.getElementById('auth-eyebrow').textContent = 'Accesso';
+            document.getElementById('auth-title').textContent = 'Area operativa';
+            document.getElementById('auth-subtitle').textContent = 'Inserisci le tue credenziali per entrare nel pannello di gestione di magazzini, componenti ed esperienze.';
+        } else {
+            document.getElementById('auth-eyebrow').textContent = 'Registrazione';
+            document.getElementById('auth-title').textContent = 'Richiedi accesso';
+            document.getElementById('auth-subtitle').textContent = 'Compila il modulo per richiedere l\'accesso. Sarà approvato da un amministratore.';
+        }
+    }
+
+    async function selfRegister() {
+        const nome     = document.getElementById('reg-nome').value.trim();
+        const cognome  = document.getElementById('reg-cognome').value.trim();
+        const email    = document.getElementById('reg-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const password2= document.getElementById('reg-password2').value;
+        const errEl    = document.getElementById('reg-error');
+
+        errEl.style.display = 'none';
+
+        if (!nome || !cognome)         { errEl.textContent = 'Nome e cognome sono obbligatori.'; errEl.style.display = ''; return; }
+        if (!email)                    { errEl.textContent = 'Inserisci un indirizzo email valido.'; errEl.style.display = ''; return; }
+        if (password.length < 6)       { errEl.textContent = 'La password deve essere di almeno 6 caratteri.'; errEl.style.display = ''; return; }
+        if (password !== password2)    { errEl.textContent = 'Le password non coincidono.'; errEl.style.display = ''; return; }
+
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, cognome, email, password, ruolo: 'DOCENTE' })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            document.getElementById('reg-form').style.display = 'none';
+            document.getElementById('reg-pending-msg').style.display = 'block';
+            document.getElementById('auth-eyebrow').textContent = '';
+            document.getElementById('auth-title').textContent = '';
+            document.getElementById('auth-subtitle').textContent = '';
+            document.querySelector('.auth-toggle').style.display = 'none';
+        } else {
+            errEl.textContent = data.error || 'Errore durante la registrazione.';
+            errEl.style.display = '';
+        }
+    }
+</script>
+</body>
+</html>
