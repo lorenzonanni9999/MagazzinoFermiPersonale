@@ -1887,8 +1887,19 @@ async function confirmSendReset() {
   btn.disabled = false;
   btn.textContent = "Invia mail";
   closeModal("modal-reset-confirm");
-  if (res.ok) showAlert(data.message, "success");
-  else showAlert(data.error || "Errore invio email", "error");
+  if (res.ok) {
+    if (data.email_sent === false) {
+      showAlert(data.message, "warning");
+      // Mostra il link in una finestra copiabile
+      setTimeout(() => {
+        const link = prompt("📋 Copia il link e invialo manualmente all'utente:", data.reset_url);
+      }, 200);
+    } else {
+      showAlert(data.message, "success");
+    }
+  } else {
+    showAlert(data.error || "Errore invio email", "error");
+  }
   _resetTargetId = null;
 }
 

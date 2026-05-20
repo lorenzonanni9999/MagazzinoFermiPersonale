@@ -35,14 +35,9 @@ class RegisterHandler(BaseHandler):
             if not current_user or current_user.get("ruolo") != "ADMIN":
                 return self.write_json({"error": "Solo ADMIN può creare utenti ADMIN o TECNICO"}, 403)
 
-        # DOCENTE: se lo crea ADMIN o TECNICO → approvato subito; altrimenti → in attesa
-        if ruolo == "DOCENTE":
-            if current_user and current_user.get("ruolo") in ("ADMIN", "TECNICO"):
-                approvato = True
-            else:
-                approvato = False
-        else:
-            approvato = True
+        # DOCENTE: sempre in attesa di approvazione — l'admin deve approvare esplicitamente
+        # ADMIN/TECNICO: approvati subito (solo un ADMIN può crearli, check già fatto sopra)
+        approvato = ruolo != "DOCENTE"
 
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         user_id = await db_interface.create_user(email, hashed, ruolo, approvato, nome, cognome)
@@ -246,16 +241,28 @@ class ResetTokenHandler(BaseHandler):
         host = self.request.host
         reset_url = f"{scheme}://{host}/static/reset_password.html?token={token}"
 
+        email_sent = False
         try:
             await send_reset_email(target["email"], reset_url)
-        except Exception as e:
-            return self.write_json({"error": f"Errore invio email: {str(e)}"}, 500)
+            email_sent = True
+        except Exception:
+            pass  # SMTP non configurato: il link viene restituito nella risposta
 
         await db_interface.add_log(
             admin["id"], admin["email"],
-            "RESET_TOKEN", f"Inviato link reset a {target['email']} (user_id={user_id})"
+            "RESET_TOKEN", f"Generato link reset per {target['email']} (user_id={user_id}), email_sent={email_sent}"
         )
-        return self.write_json({"message": f"Link di reset inviato a {target['email']}"})
+
+        if email_sent:
+            message = f"Link di reset inviato a {target['email']}"
+        else:
+            message = "SMTP non configurato — copia il link manualmente e invialo all'utente"
+
+        return self.write_json({
+            "message": message,
+            "reset_url": reset_url,
+            "email_sent": email_sent
+        })
 
 
 class ResetPasswordHandler(BaseHandler):
